@@ -2,6 +2,10 @@
 // Include database configuration
 include('config/db.php');
 
+// Get selected month and year from URL parameters
+$selectedMonth = isset($_GET['month']) ? $_GET['month'] : date('m');
+$selectedYear = isset($_GET['year']) ? $_GET['year'] : date('Y');
+
 // Handle form submission
 if ($_SERVER["REQUEST_METHOD"] == "POST") {
     $nama = $_POST['nama_brand'];
@@ -23,8 +27,46 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     }
 }
 
-// Fetch data from the database
-$data = $conn->query("SELECT * FROM content_planner ORDER BY id DESC");
+// Fetch data from the database with month filter
+$data = $conn->query("SELECT * FROM content_planner 
+                     WHERE MONTH(tanggal_upload) = '$selectedMonth' 
+                     AND YEAR(tanggal_upload) = '$selectedYear'
+                     ORDER BY id DESC");
+
+// Count the number of rows in the content_planner table for selected month
+$countQuery = $conn->query("SELECT COUNT(*) AS total_videos 
+                           FROM content_planner 
+                           WHERE MONTH(tanggal_upload) = '$selectedMonth' 
+                           AND YEAR(tanggal_upload) = '$selectedYear'");
+$countResult = $countQuery->fetch_assoc();
+$totalVideos = $countResult['total_videos'];
+
+// Calculate the total income from the content_planner table for selected month
+$incomeQuery = $conn->query("SELECT SUM(total_jumlah) AS total_income 
+                            FROM content_planner 
+                            WHERE status = 'Sudah' 
+                            AND MONTH(tanggal_upload) = '$selectedMonth' 
+                            AND YEAR(tanggal_upload) = '$selectedYear'");
+$incomeResult = $incomeQuery->fetch_assoc();
+$totalIncome = $incomeResult['total_income'] ?? 0;
+
+// Count completed videos for selected month
+$completedQuery = $conn->query("SELECT COUNT(*) AS completed_videos 
+                               FROM content_planner 
+                               WHERE status = 'Sudah' 
+                               AND MONTH(tanggal_upload) = '$selectedMonth' 
+                               AND YEAR(tanggal_upload) = '$selectedYear'");
+$completedResult = $completedQuery->fetch_assoc();
+$completedVideos = $completedResult['completed_videos'];
+
+// Count uncompleted videos for selected month
+$uncompletedQuery = $conn->query("SELECT COUNT(*) AS uncompleted 
+                                 FROM content_planner 
+                                 WHERE status = 'Belum' 
+                                 AND MONTH(tanggal_upload) = '$selectedMonth' 
+                                 AND YEAR(tanggal_upload) = '$selectedYear'");
+$uncompletedResult = $uncompletedQuery->fetch_assoc();
+$belumselesai = $uncompletedResult['uncompleted'];
 ?>
 
 <!DOCTYPE html>
@@ -163,30 +205,39 @@ $data = $conn->query("SELECT * FROM content_planner ORDER BY id DESC");
                 <h2>Dashboardn Beauty With Maretta</h2>
                 <h5 class="text-muted">Overview</h5>
 
+                <!-- Month Filter -->
+                <div class="row mb-4">
+                    <div class="col-md-6">
+                        <form method="GET" class="d-flex align-items-center" id="filterForm">
+                            <select name="month" class="form-select me-2" style="width: auto;" onchange="this.form.submit()">
+                                <?php
+                                $months = [
+                                    '01' => 'Januari', '02' => 'Februari', '03' => 'Maret',
+                                    '04' => 'April', '05' => 'Mei', '06' => 'Juni',
+                                    '07' => 'Juli', '08' => 'Agustus', '09' => 'September',
+                                    '10' => 'Oktober', '11' => 'November', '12' => 'Desember'
+                                ];
+                                foreach ($months as $value => $label) {
+                                    $selected = ($value == $selectedMonth) ? 'selected' : '';
+                                    echo "<option value='$value' $selected>$label</option>";
+                                }
+                                ?>
+                            </select>
+                            <select name="year" class="form-select me-2" style="width: auto;" onchange="this.form.submit()">
+                                <?php
+                                $currentYear = date('Y');
+                                for ($year = $currentYear; $year >= $currentYear - 2; $year--) {
+                                    $selected = ($year == $selectedYear) ? 'selected' : '';
+                                    echo "<option value='$year' $selected>$year</option>";
+                                }
+                                ?>
+                            </select>
+                        </form>
+                    </div>
+                </div>
+
                 <!-- Overview Cards -->
                 <div class="row g-3">
-                    <?php
-                    // Count the number of rows in the content_planner table
-                    $countQuery = $conn->query("SELECT COUNT(*) AS total_videos FROM content_planner");
-                    $countResult = $countQuery->fetch_assoc();
-                    $totalVideos = $countResult['total_videos'];
-
-                    // Calculate the total income from the content_planner table
-                    $incomeQuery = $conn->query("SELECT SUM(total_jumlah) AS total_income FROM content_planner WHERE status = 'Sudah'");
-                    $incomeResult = $incomeQuery->fetch_assoc();
-                    $totalIncome = $incomeResult['total_income'] ?? 0; // Menggunakan null coalescing operator untuk menghindari null
-
-                    // Count the number of rows in the content_planner table with status 'Sudah'
-                    $completedQuery = $conn->query("SELECT COUNT(*) AS completed_videos FROM content_planner WHERE status = 'Sudah'");
-                    $completedResult = $completedQuery->fetch_assoc();
-                    $completedVideos = $completedResult['completed_videos'];
-
-                    // Count the number of rows in the content_planner table with status 'Belum'
-                    $uncompletedQuery = $conn->query("SELECT COUNT(*) AS uncompleted FROM content_planner WHERE status = 'Belum'");
-                    $uncompletedResult = $uncompletedQuery->fetch_assoc();
-                    $belumselesai = $uncompletedResult['uncompleted'];
-                    ?>
-                   
                     <div class="col-md-3">
                         <div class="card-box bg-success">
                             <span><?= $totalVideos ?><br><small>Jumlah Masuk</small></span><span>✅</span>
