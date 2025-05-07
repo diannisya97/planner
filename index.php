@@ -42,9 +42,107 @@ $data = $conn->query("SELECT * FROM content_planner ORDER BY id DESC");
             bottom: 0;
             left: 0;
             width: 100%;
-            background-color: #f8f9fa; /* Warna latar belakang footer */
+            background-color: #f8f9fa;
             padding: 10px 0;
-            box-shadow: 0 -1px 5px rgba(0, 0, 0, 0.1); /* Opsional: Tambahkan bayangan */
+            box-shadow: 0 -1px 5px rgba(0, 0, 0, 0.1);
+        }
+
+        /* Responsive styles */
+        @media (max-width: 768px) {
+            .sidebar {
+                position: fixed;
+                top: 0;
+                left: -100%;
+                height: 100vh;
+                z-index: 1000;
+                transition: 0.3s;
+                background: white;
+                padding: 20px;
+            }
+
+            .sidebar.active {
+                left: 0;
+            }
+
+            .card-box {
+                margin-bottom: 15px;
+            }
+
+            .table-responsive {
+                margin-bottom: 60px; /* Memberikan ruang untuk footer */
+            }
+
+            .table th, .table td {
+                white-space: nowrap;
+                font-size: 14px;
+            }
+
+            .btn-sm {
+                padding: 0.25rem 0.4rem;
+                font-size: 12px;
+            }
+
+            /* Styling untuk card-box */
+            .card-box {
+                padding: 15px;
+                border-radius: 8px;
+                color: white;
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                margin-bottom: 15px;
+                box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            }
+
+            .card-box span:first-child {
+                font-size: 1.2rem;
+                font-weight: bold;
+            }
+
+            .card-box span:last-child {
+                font-size: 1.5rem;
+            }
+
+            /* Styling untuk tabel */
+            .table {
+                width: 100%;
+                margin-bottom: 1rem;
+                background-color: transparent;
+                border-collapse: collapse;
+            }
+
+            .table th {
+                background-color: #343a40;
+                color: white;
+                font-weight: 500;
+                text-align: center;
+                vertical-align: middle;
+                padding: 12px 8px;
+            }
+
+            .table td {
+                padding: 12px 8px;
+                vertical-align: middle;
+                text-align: center;
+            }
+
+            .table-striped tbody tr:nth-of-type(odd) {
+                background-color: rgba(0,0,0,.05);
+            }
+
+            .table-bordered {
+                border: 1px solid #dee2e6;
+            }
+
+            .table-bordered th,
+            .table-bordered td {
+                border: 1px solid #dee2e6;
+            }
+
+            /* Styling untuk tombol aksi */
+            .btn-group-sm > .btn, .btn-sm {
+                margin: 2px;
+            }
         }
     </style>
 </head>
@@ -74,9 +172,9 @@ $data = $conn->query("SELECT * FROM content_planner ORDER BY id DESC");
                     $totalVideos = $countResult['total_videos'];
 
                     // Calculate the total income from the content_planner table
-                    $incomeQuery = $conn->query("SELECT SUM(total_jumlah) AS total_income FROM content_planner");
+                    $incomeQuery = $conn->query("SELECT SUM(total_jumlah) AS total_income FROM content_planner WHERE status = 'Sudah'");
                     $incomeResult = $incomeQuery->fetch_assoc();
-                    $totalIncome = $incomeResult['total_income'];
+                    $totalIncome = $incomeResult['total_income'] ?? 0; // Menggunakan null coalescing operator untuk menghindari null
 
                     // Count the number of rows in the content_planner table with status 'Sudah'
                     $completedQuery = $conn->query("SELECT COUNT(*) AS completed_videos FROM content_planner WHERE status = 'Sudah'");
@@ -175,17 +273,9 @@ $data = $conn->query("SELECT * FROM content_planner ORDER BY id DESC");
       </div>
     </div>
                 <!-- Project/Website List -->
-                <h5 class="mt-5">Project/Website List</h5>
+                
                 <div class="project-card mb-4">
-                    <div class="d-flex justify-content-between">
-                        <div>
-                            <h6>Client 1</h6>
-                            <p class="text-muted mb-1">https://luthfishogir...</p>
-                        </div>
-                        <div class="text-end">
-                            <span class="badge bg-success mb-1">online</span><br>
-                            <small class="text-muted">⏱️ 0.138 ms</small>
-                        </div>
+                    
                     </div>
                 </div>
 
@@ -194,16 +284,16 @@ $data = $conn->query("SELECT * FROM content_planner ORDER BY id DESC");
                     <table class="table table-bordered table-striped">
                         <thead class="table-dark">
                             <tr>
-                                <th>NO</th>
-                                <th>Nama Brand</th>
-                                <th>Medsos</th>
-                                <th>Produk</th>
-                                <th>Tanggal</th>
-                                <th>Video</th>
-                                <th>Rate</th>
-                                <th>Total</th>
-                                <th>Status</th>
-                                <th>Aksi</th>
+                                <th style="width: 5%">NO</th>
+                                <th style="width: 15%">Nama Brand</th>
+                                <th style="width: 15%">Medsos</th>
+                                <th style="width: 15%">Produk</th>
+                                <th style="width: 10%">Tanggal</th>
+                                <th style="width: 8%">Video</th>
+                                <th style="width: 12%">Rate</th>
+                                <th style="width: 12%">Total</th>
+                                <th style="width: 8%">Status</th>
+                                <th style="width: 10%">Aksi</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -226,6 +316,9 @@ $data = $conn->query("SELECT * FROM content_planner ORDER BY id DESC");
                                 <td>
                                     <a href="edit.php?id=<?= $row['id'] ?>" class="btn btn-warning btn-sm">Edit</a>
                                     <a href="delete.php?id=<?= $row['id'] ?>" class="btn btn-danger btn-sm" onclick="return confirm('Yakin?')">Hapus</a>
+                                    <?php if ($row['status'] == 'Belum'): ?>
+                                    <a href="update_status.php?id=<?= $row['id'] ?>" class="btn btn-success btn-sm" onclick="return confirm('Tandai sebagai selesai?')">Selesai</a>
+                                    <?php endif; ?>
                                 </td>
                             </tr>
                             <?php endwhile; ?>
