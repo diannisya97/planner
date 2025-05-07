@@ -1,7 +1,7 @@
 <?php
 $host = "localhost";
-$user = "root"; // ganti jika perlu
-$pass = "root";     // ganti jika ada password
+$user = "data"; // ganti jika perlu
+$pass = "kaskus2727";     // ganti jika ada password
 $db   = "content_planner_db";
 
 $conn = new mysqli($host, $user, $pass, $db);
